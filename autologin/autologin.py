@@ -13,7 +13,7 @@ from lxml import html
 from lxml.etree import HTMLParser
 import webbrowser
 import logging
-
+import re
 # Use formasaurus for form identification.
 # There is a fallback if it is not installed.
 # However, formasaurus is more effecive at finding login forms.
@@ -133,11 +133,15 @@ class AutoLogin():
         Request timeout is set to 10 seconds.
         Returns the cookiejar.
         """
-	proxy_ip = proxy.split('/')[2].split(':')[0]
-	proxy_port = proxy.split('/')[2].split(':')[1]
-        self.headers['Referer'] = base_url
-	proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
-        opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+        if proxy!= None:
+	    proxy_ip = proxy.split('/')[2].split(':')[0]
+	    proxy_port = proxy.split('/')[2].split(':')[1]
+            self.headers['Referer'] = base_url
+	    proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
+            opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+        else:
+            self.headers['Referer'] = base_url
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
 	urllib2.install_opener(opener)
         encoded_form_data = self.encode_form_dict(form_data)
         data = urlencode(encoded_form_data)
@@ -232,7 +236,9 @@ class AutoLogin():
         else:
             print "[Error] Unsupported proxy type: %s" % proxy_type
             exit(0)
-            
+        if proxy != None and re.match(r"http(|s)://\d+.\d+.\d+.\d+:\d+",proxy) == None:
+            print "[Error] Invalid proxy patterns. Validation: http(s)://192.168.0.1:8080"
+            exit(0)
         html_source = self.get_html(url,proxy)
         cookies = []
         login_request = self.login_request(
@@ -248,7 +254,7 @@ class AutoLogin():
                 form_url=login_request['url'],
                 form_data=login_request['data'],
                 base_url=login_request['url'],
-		        proxy=login_request['proxy'])
+		proxy=login_request['proxy'])
             return cookies
 
         return None
@@ -284,11 +290,15 @@ class AutoLogin():
         Some sites require this flow for authentication.
         """
         html_source = None
-	proxy_ip = proxy.split('/')[2].split(':')[0]
-	proxy_port = proxy.split(':')[2]
-        req = urllib2.Request(url)
-	proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
-	opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+        if proxy!= None:
+	    proxy_ip = proxy.split('/')[2].split(':')[0]
+	    proxy_port = proxy.split(':')[2]
+            req = urllib2.Request(url)
+	    proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
+	    opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+        else:
+            req = urllib2.Request(url)                                                       
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
         urllib2.install_opener(opener)
 	try:
             response = opener.open(req)
