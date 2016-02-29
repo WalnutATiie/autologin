@@ -2,6 +2,8 @@
 import sys
 import argparse
 import re
+import socket
+import socks
 import urllib2
 from urllib import urlencode
 from cookielib import CookieJar
@@ -124,22 +126,24 @@ class AutoLogin():
             cookies.append(cookie.__dict__)
 
         return cookies
-
-    def login(self, form_url, form_data, base_url=None):
+    def login(self, form_url, form_data, proxy, base_url=None):
         """
         Attempt to login to a site using form_data dictionary.
         Uses a cookielib cookiejar https://docs.python.org/2/library/cookielib.html.
         Request timeout is set to 10 seconds.
         Returns the cookiejar.
         """
+	proxy_ip = proxy.split('/')[2].split(':')[0]
+	proxy_port = proxy.split('/')[2].split(':')[1]
         self.headers['Referer'] = base_url
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+	proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
+        opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+	urllib2.install_opener(opener)
         encoded_form_data = self.encode_form_dict(form_data)
         data = urlencode(encoded_form_data)
         req = urllib2.Request(form_url, data, headers=self.headers)
-
         try:
-            response = opener.open(req, timeout=10)
+            response = opener.open(req)
         except urllib2.URLError as e:
             print(e)
         try:
@@ -168,6 +172,7 @@ class AutoLogin():
                 'url': url,
                 'method': method,
                 'data': data,
+		'proxy': proxy,
             }
 
         return request
@@ -213,12 +218,22 @@ class AutoLogin():
 
     #    return None
 
-    def auth_cookies_from_url(self, url, username, password, proxy=None):
+    def auth_cookies_from_url(self, url, username, password, proxy_type = None,proxy=None):
         """
         Attempt to login and return the authenticated cookies.
         """
         # Try to login from any forms on page
-        html_source = self.get_html(url)
+        if proxy_type == None:
+            proxy = None
+        elif proxy_type == 'http':
+            pass
+        elif proxy_type == 'https':
+            pass
+        else:
+            print "[Error] Unsupported proxy type: %s" % proxy_type
+            exit(0)
+            
+        html_source = self.get_html(url,proxy)
         cookies = []
         login_request = self.login_request(
             html_source=html_source,
@@ -232,7 +247,8 @@ class AutoLogin():
             cookies = self.login(
                 form_url=login_request['url'],
                 form_data=login_request['data'],
-                base_url=login_request['url'])
+                base_url=login_request['url'],
+		        proxy=login_request['proxy'])
             return cookies
 
         return None
@@ -260,7 +276,7 @@ class AutoLogin():
 
         return None
 
-    def get_html(self, url):
+    def get_html(self, url, proxy):
         """
         Method to return the html source of a page.
         Uses the object cookie jar, allowing you to request the login page,
@@ -268,15 +284,18 @@ class AutoLogin():
         Some sites require this flow for authentication.
         """
         html_source = None
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
-        req = urllib2.Request(url, headers=self.headers)
-        try:
-            response = opener.open(req, timeout=10)
+	proxy_ip = proxy.split('/')[2].split(':')[0]
+	proxy_port = proxy.split(':')[2]
+        req = urllib2.Request(url)
+	proxy = urllib2.ProxyHandler({'http':'http://%s:%s'%(proxy_ip,proxy_port)})
+	opener = urllib2.build_opener(proxy,urllib2.HTTPCookieProcessor(self.cookie_jar))
+        urllib2.install_opener(opener)
+	try:
+            response = opener.open(req)
             html_source = response.read()
         except urllib2.URLError as e:
             print(e)
-
-        return html_source
+	return html_source
 
     def extract_tokens(self, text):
         """
