@@ -61,6 +61,11 @@ class AutoLogin():
             'Accept': self.accept_encoding,
             'Accept-Language': 'en',
         }
+        logging.basicConfig(level=logging.INFO,
+                format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s:%(message)s',
+                datefmt='%a, %d %b %Y %H:%M:%S',
+                filename=None,
+                filemode='a+') 
         # Cookie jar and html parser for making requests with urllib
         self.parser = HTMLParser(recover=True, encoding='utf-8')
         self.cookie_jar = CookieJar()
@@ -234,10 +239,10 @@ class AutoLogin():
         elif proxy_type == 'https':
             pass
         else:
-            print "[Error] Unsupported proxy type: %s" % proxy_type
+            logging.error("Unsupported proxy type: %s" % proxy_type)
             exit(0)
         if proxy != None and re.match(r"http(|s)://\d+.\d+.\d+.\d+:\d+",proxy) == None:
-            print "[Error] Invalid proxy patterns. Validation: http(s)://192.168.0.1:8080"
+            logging.error("Invalid proxy patterns. Validation: http(s)://192.168.0.1:8080")
             exit(0)
         html_source = self.get_html(url,proxy)
         cookies = []
@@ -304,7 +309,7 @@ class AutoLogin():
             response = opener.open(req)
             html_source = response.read()
         except urllib2.URLError as e:
-            print(e)
+            logging.error(e)
 	return html_source
 
     def extract_tokens(self, text):
@@ -375,7 +380,7 @@ class AutoLogin():
             if is_login and link not in results:
                 results.append(href)
 
-        print('#Login links: {}'.format(len(results)))
+        logging.info('#Login links: {}'.format(len(results)))
         return results
 
     def show_html_in_browser(self, html_source):
@@ -400,7 +405,7 @@ class AutoLogin():
         try:
             response = opener.open(req, timeout=10)
         except urllib2.URLError as e:
-            print(e)
+            logging.error(e)
             sys.exit()
 
         html_source = response.read()

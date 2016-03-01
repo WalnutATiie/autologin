@@ -6,9 +6,9 @@ from autologin.autologin import AutoLogin
 url = 'http://www.renren.com'
 username = ''
 password = ''
-#proxy_type = 'http'
-#proxy = 'http://47.88.6.231:9398'
+proxy_type = ''
+proxy = ''
 al = AutoLogin()
-cookies = al.auth_cookies_from_url(url, username, password)
-#cookies = al.auth_cookies_from_url(url, username, password,proxy_type,proxy)
+#cookies = al.auth_cookies_from_url(url, username, password)
+cookies = al.auth_cookies_from_url(url, username, password,proxy_type,proxy)
 print cookies

@@ -15,7 +15,6 @@ class LoginFormFinder(object):
         self.password = password
         self.form_extractor = form_extractor
         doc = html.document_fromstring(html_source, base_url=base_url)
-
         if self.form_extractor is not None:
             self.login_form = self.get_login_form_with_formasaurus(doc)
         else:
@@ -51,7 +50,7 @@ class LoginFormFinder(object):
         return score
 
     def get_top_form(self, forms):
-        """Return the form most likely to be a login form"""
+        """Return the form most likely to be a login form, based on scoring mechanism"""
         self.all_forms = sorted(forms, key=self.form_score, reverse=True)
         try:
             top_form = self.all_forms[0]
@@ -61,7 +60,7 @@ class LoginFormFinder(object):
         return top_form, self.form_score(top_form)
 
     def get_login_form_with_formasaurus(self, doc):
-        """Return the form most likely to be a login form"""
+        """Return the form most likely to be a login form, based on formasaurus:https://github.com/TeamHG-Memex/Formasaurus"""
         login_form = None
         self.all_forms = self.form_extractor.extract_forms(doc)
         login_forms = [v[0]
