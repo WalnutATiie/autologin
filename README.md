@@ -65,7 +65,7 @@ with proxy:
 ```
 cookies = al.auth_cookies_from_url(url, username, password,proxy_type='http',proxy='http://192.168.0.1:8080')
 ```
-Notice we only support http/https proxy.
+Notice we only support http/https proxy.<br/>
 Note that it returns all cookies, they may be session cookies rather than authenticated cookies.
 
 
