@@ -49,8 +49,9 @@ You now have a dictionary.
 ## Installation
 This is not (yet) registered on PyPi so you must clone the repository and use setup.py to build and install:
 ```
-$ git clone https://github.com/TeamHG-Memex/autologin.git
+$ git clone https://github.com/WalnutATiie/autologin.git
 $ cd autologin
+$ sudo pip install - requirements.txt
 $ python setup.py build
 $ python setup.py install
 ```
@@ -60,6 +61,11 @@ This method makes an http request to the URL using urllib, extracts the login fo
 ```
 cookies = al.auth_cookies_from_url(url, username, password)
 ```
+with proxy:
+```
+cookies = al.auth_cookies_from_url(url, username, password,proxy_type='http',proxy='http://192.168.0.1:8080')
+```
+Notice we only support http/https proxy.
 Note that it returns all cookies, they may be session cookies rather than authenticated cookies.
 
 
